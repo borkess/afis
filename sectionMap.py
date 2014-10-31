@@ -3,39 +3,29 @@ from sys import argv
 from BitmapFile import BitmapFile
 from SectionRaster import SectionRaster
 
-script, image = argv
+script, path, image = argv
 
-with open(image, "rb") as f:
+with open(path + image, "rb") as f:
     bmp = BitmapFile(bytearray(f.read()))
 
-map = SectionRaster(8, bmp.width, bmp.height)
+map = SectionRaster(bmp, 8)
 print("map.width:", map.width, "map.height:", map.height)
 
-for i in range(bmp.start, bmp.start + bmp.width * bmp.height, bmp.bpp):
-    pixelX = (i-bmp.start) // bmp.bpp % bmp.width // map.pixelSize
-    pixelY = (i-bmp.start) // bmp.bpp // (bmp.width * map.pixelSize)
-    
-    if bmp.data[i] < map.minima[pixelX][pixelY]:
-        map.minima[pixelX][pixelY] = bmp.data[i]
-    if bmp.data[i] < map.minimum:
-        map.minimum = bmp.data[i]
-    if bmp.data[i] > map.maximum:
-        map.maximum = bmp.data[i]
+map.calculateMinima()
 
 print("map.minimum", map.minimum)
 print("map.maximum", map.maximum)
 print("map.minima.19.19", map.minima[19][19])
 
 factorDelta = 10
-finalThreshold = 255
-finalTransitionCount = map.width * map.height
+minTransitionCount = map.width * map.height
 
 for factor in [x / factorDelta for x in range(factorDelta)]:
     threshold = int(map.minimum + factor * (map.maximum - map.minimum))
     
     foregroundCount = 0
     transitionCount = 0
-    isForeground = 0
+    isForeground = None
     
     for i in range(map.width):
         for j in range(map.height):
@@ -49,11 +39,20 @@ for factor in [x / factorDelta for x in range(factorDelta)]:
             if isForeground:
                 foregroundCount += 1
     
-    if foregroundCount >= map.width*map.height*0.1 and transitionCount < finalTransitionCount:
-        finalThreshold = threshold
-        finalTransitionCount = transitionCount
+    if foregroundCount >= map.width*map.height*0.1 and transitionCount < minTransitionCount:
+        map.threshold = threshold
+        minTransitionCount = transitionCount
     
     print("factor:", factor, "threshold:", threshold, 
         "foregroundCount:", foregroundCount, "transitionCount:", transitionCount)
 
-print("finalThreshold:", finalThreshold)
+print("map.threshold:", map.threshold)
+
+for x in range(map.width):
+    for y in range(map.height):
+        if map.minima[x][y] > map.threshold:
+            map.foreground = True
+            map.paintBlock(x, y, (255, 255, 255))
+
+with open(path + image + "." + str(map.threshold) + ".bmp", "wb") as f:
+    f.write(bmp.data)

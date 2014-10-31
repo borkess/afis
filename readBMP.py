@@ -2,8 +2,8 @@ from sys import argv
 
 from BitmapFile import BitmapFile
 
-script, image = argv
-with open(image, "rb") as f:
+script, path_image = argv
+with open(path_image, "rb") as f:
     bmp = BitmapFile(bytearray(f.read()))
     
 print("size: ", bmp.size)
