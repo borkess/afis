@@ -15,3 +15,7 @@ class BitmapFile:
         for i in range(len(d)):
             sum = sum + (d[i] % 16) * 16**(i*2) + (d[i] // 16) * 16**(i*2 + 1)
         return sum
+
+    def makeFile(self, filePath):
+        with open(filePath, "wb") as f:
+            f.write(self.data)

@@ -14,7 +14,6 @@ class SectionRaster:
         for i in range(self.bmp.start, self.bmp.start + self.bmp.width * self.bmp.height * self.bmp.bpp, self.bmp.bpp):
             pixelX = (i-self.bmp.start) // self.bmp.bpp % self.bmp.width // self.pixelSize
             pixelY = (i-self.bmp.start) // self.bmp.bpp // (self.bmp.width * self.pixelSize)
-            
             if self.bmp.data[i] < self.minima[pixelX][pixelY]:
                 self.minima[pixelX][pixelY] = self.bmp.data[i]
             if self.bmp.data[i] < self.minimum:
@@ -22,9 +21,55 @@ class SectionRaster:
             if self.bmp.data[i] > self.maximum:
                 self.maximum = self.bmp.data[i]
 
+    def calculateThreshold(self):
+        factorDelta = 10
+        minTransitionCount = self.width * self.height
+        
+        for factor in [x / factorDelta for x in range(factorDelta)]:
+            threshold = int(self.minimum + factor * (self.maximum - self.minimum))
+            foregroundCount = 0
+            transitionCount = 0
+            isForeground = None
+            
+            for i in range(self.width):
+                for j in range(self.height):
+                    if isForeground not in (True,False):
+                        isForeground = self.minima[i][j] <= threshold
+                    if isForeground != (self.minima[i][j] <= threshold):
+                        transitionCount += 1
+                        isForeground = self.minima[i][j] <= threshold
+                    if isForeground:
+                        foregroundCount += 1
+            
+            if foregroundCount >= self.width*self.height*0.1 and transitionCount < minTransitionCount:
+                self.threshold = threshold
+                minTransitionCount = transitionCount
+
+    def findForeground(self):
+        for x in range(self.width):
+            for y in range(self.height):
+                if self.minima[x][y] <= self.threshold:
+                    self.foreground[x][y] = True
+
+    def erodeForeground(self):
+        newForeground = [[False for y in range(self.height)] for x in range(self.width)]
+
+        for x in range(1, self.width-1):
+            for y in range(1, self.height-1):
+                if self.foreground[x][y] and self.foreground[x-1][y] and self.foreground[x+1][y]:
+                    newForeground[x][y] = True
+
+        self.foreground = newForeground
+
     def paintBlock(self, x, y, rgb):
         blockStart = self.bmp.start + x * self.pixelSize * self.bmp.bpp + y * self.bmp.width * self.pixelSize * self.bmp.bpp
         for i in range(self.pixelSize):
             for j in range(self.pixelSize):
                 idx = blockStart + i * self.bmp.bpp + j * self.bmp.width * self.bmp.bpp
                 self.bmp.data[idx:idx+3] = rgb
+
+    def cleanBackground(self):
+        for x in range(self.width):
+            for y in range(self.height):
+                if not self.foreground[x][y]:
+                    self.paintBlock(x, y, (255, 255, 255))
