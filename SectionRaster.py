@@ -6,6 +6,7 @@ class SectionRaster:
         self.height = self.bmp.height // pixelSize
         self.minimum = 255
         self.maximum = 0
+        self.centerOfMass = (self.width // 2, self.height // 2)
         self.minima = [[255 for y in range(self.height)] for x in range(self.width)]
         self.threshold = 255
         self.foreground = [[False for y in range(self.height)] for x in range(self.width)]
@@ -60,6 +61,18 @@ class SectionRaster:
                     newForeground[x][y] = True
 
         self.foreground = newForeground
+        
+    def findCenterOfMass(self):
+        count = 0
+        totalX = 0
+        totalY = 0
+        for x in range(1, self.width-1):
+            for y in range(1, self.height-1):
+                if self.foreground[x][y]:
+                    count += 1
+                    totalX += x
+                    totalY += y
+        self.centerOfMass = (totalX // count, totalY // count)
 
     def paintBlock(self, x, y, rgb):
         blockStart = self.bmp.start + x * self.pixelSize * self.bmp.bpp + y * self.bmp.width * self.pixelSize * self.bmp.bpp
