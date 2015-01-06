@@ -30,14 +30,14 @@ map.findCenterOfMass()
 #-------------------------------------------------------------------------------
 comX, comY = map.centerOfMass
 
-def encontrarOffsetX(offset, map, comX, comY, sign, limit, bottom, top):
+def findOffsetX(offset, map, comX, comY, sign, limit, bottom, top):
     edge = False
     while not edge:
         offset += 1
-        x = comX + offset*sign
+        x = comX + offset * sign
         for i in range(offset + 1):
-            yBottom = bottom if comY-i < bottom else comY-i
-            yTop = top if comY+i > top else comY+i
+            yBottom = bottom if comY - i < bottom else comY - i
+            yTop = top if comY + i > top else comY + i
             if (map.foreground[x][yBottom] or map.foreground[x][yTop]):
                 break
             elif i == offset:
@@ -46,14 +46,14 @@ def encontrarOffsetX(offset, map, comX, comY, sign, limit, bottom, top):
             elif x == limit:
                 edge = True
     return offset
-def encontrarOffsetY(offset, map, comX, comY, sign, limit, left, right):
+def findOffsetY(offset, map, comX, comY, sign, limit, left, right):
     edge = False
     while not edge:
         offset += 1
-        y = comY + offset*sign
+        y = comY + offset * sign
         for j in range(offset + 1):
-            xLeft = left if comX-j < comX-j else comX-j
-            xRight = right if comX+j > right else comX+j
+            xLeft = left if comX - j < comX - j else comX - j
+            xRight = right if comX + j > right else comX + j
             if (map.foreground[xLeft][y] or
                 map.foreground[xRight][y]):
                 break
@@ -63,74 +63,76 @@ def encontrarOffsetY(offset, map, comX, comY, sign, limit, left, right):
             elif y == limit:
                 edge = True
     return offset
-    
 
-offsetW = encontrarOffsetX(10, map, comX, comY, -1, 0, 0, map.height-1)
-offsetE = encontrarOffsetX(10, map, comX, comY, 1, map.width-1, 0, map.height-1)
-offsetS = encontrarOffsetY(2, map, comX, comY, -1, 0, 0, map.width-1)
-offsetN = encontrarOffsetY(10, map, comX, comY, 1, map.height-1, 0, map.width-1)
+offsetW = findOffsetX(10, map, comX, comY, -1, 0, 0, map.height - 1)
+offsetE = findOffsetX(10, map, comX, comY, 1, map.width - 1, 0, map.height - 1)
+offsetS = findOffsetY(2, map, comX, comY, -1, 0, 0, map.width - 1)
+offsetN = findOffsetY(10, map, comX, comY, 1, map.height - 1, 0, map.width - 1)
 
-left = 0 if comX < offsetW else comX-offsetW
-right = map.width-1 if comX+offsetE >= map.width else comX+offsetE
-bottom = 0 if comY < offsetS else comY-offsetS
-top = map.height-1 if comY+offsetN >= map.height else comY+offsetN
+left = 0 if comX < offsetW else comX - offsetW
+right = map.width - 1 if comX + offsetE >= map.width else comX + offsetE
+bottom = 0 if comY < offsetS else comY - offsetS
+top = map.height - 1 if comY + offsetN >= map.height else comY + offsetN
 
-#"""
 for x in range(map.width):
     for y in range(map.height):
         if (x < left or  x > right) or (y < bottom or y > top):
             map.foreground[x][y] = False
 
-for y in range(bottom, top+1):
+for y in range(bottom, top + 1):
     xl = right
     xr = left
     xlf = False
     xrf = False
-    for x in range(right-left):
+    for x in range(right - left):
         if xlf and xrf:
             break
-        if map.foreground[left+x][y] and not xlf:
-            xl = left+x
+        if map.foreground[left + x][y] and not xlf:
+            xl = left + x
             xlf = True
-        if map.foreground[right-x][y] and not xrf:
-            xr = right-x
+        if map.foreground[right - x][y] and not xrf:
+            xr = right - x
             xrf = True
-    for x in range(xl, xr+1):
+    for x in range(xl, xr + 1):
         map.foreground[x][y] = True
 
-for x in range(left, right+1):
+for x in range(left, right + 1):
     yb = bottom
     yt = top
     ybf = False
     ytf = False
-    for y in range(top-bottom):
+    for y in range(top - bottom):
         if ybf and ytf:
             break
-        if map.foreground[x][bottom+y] and not ybf:
-            yb = bottom+y
+        if map.foreground[x][bottom + y] and not ybf:
+            yb = bottom + y
             ybf = True
-        if map.foreground[x][top-y] and not ytf:
-            yt = top-y
+        if map.foreground[x][top - y] and not ytf:
+            yt = top - y
             ytf = True
-    for y in range(yb, yt+1):
+    for y in range(yb, yt + 1):
         map.foreground[x][y] = True
-"""
-for x in range(map.width):
-    for y in range(map.height):
-        map.foreground[x][y] = (
-                                #map.minima[x][y] <= map.threshold and
-                                x in range(left+1, right) and
-                                y in range(bottom+1, top)
-                                )
-#"""
+#-------------------------------------------------------------------------------
+
+print("centerOfMass:", map.centerOfMass)
+map.paintBlock(comX, comY, (0, 0, 255))
+
+map.findCenterOfMass()
+comX, comY = map.centerOfMass
+
+print("centerOfMass:", map.centerOfMass)
+map.paintBlock(comX, comY, (0, 255, 0))
+
+centerOffsetX = map.width // 2 - comX
+centerOffsetY = map.height // 2 - comY
+
+print("centerOffsetX", centerOffsetX, "centerOffsetY", centerOffsetY)
+
 #-------------------------------------------------------------------------------
 
 map.cleanBackground()
 
 #-------------------------------------------------------------------------------
-print("centerOfMass:", map.centerOfMass)
-map.paintBlock(comX, comY, (0, 0, 255))
-
 print("offsetW:", offsetW, "offsetE:", offsetE, "offsetS:", offsetS, "offsetN:", offsetN)
 print("left:", left, "bottom:", bottom, "right:", right, "top:", top)
 map.paintBlock(left, bottom, (0, 0, 255))
