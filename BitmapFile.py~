@@ -13,10 +13,9 @@ class BitmapFile:
     def sumBytes(self, d):
         byteSum = 0
         for i in range(len(d)):
-            byteSum += (
+            byteSum = (byteSum +
                 (d[i] % 16) * 16**(i*2) +
-                (d[i] // 16) * 16**(i*2 + 1)
-            )
+                (d[i] // 16) * 16**(i*2 + 1))
         return byteSum
 
     def makeFile(self, filePath):

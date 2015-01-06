@@ -86,4 +86,3 @@ class SectionRaster:
             for y in range(self.height):
                 if not self.foreground[x][y]:
                     self.paintBlock(x, y, (255, 255, 255))
-

@@ -134,9 +134,9 @@ map.cleanBackground()
 
 #-------------------------------------------------------------------------------
 
-bmp.makeFile(path + image + ".centered.bmp")
+bmp.makeFile(path + image + ".copia.bmp")
 
-with open(path + image + ".centered.bmp", "rb") as f:
+with open(path + image + ".copia.bmp", "rb") as f:
     bmpCopy = BitmapFile(bytearray(f.read()))
 
 mapCopy = SectionRaster(bmpCopy, 8)
@@ -160,7 +160,7 @@ for x in range(map.width):
         if not mapCopy.foreground[x][y]:
             mapCopy.paintBlock(x, y, (255, 255, 255))
 
-bmpCopy.makeFile(path + image + ".centered.bmp")
+bmpCopy.makeFile(path + image + ".copia.bmp")
 
 #-------------------------------------------------------------------------------
 print("offsetW:", offsetW, "offsetE:", offsetE,
