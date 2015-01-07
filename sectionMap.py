@@ -27,6 +27,8 @@ map.erodeForeground()
 
 map.findCenterOfMass()
 
+print("centerOfMass:", map.centerOfMass)
+
 #-------------------------------------------------------------------------------
 comX, comY = map.centerOfMass
 
@@ -69,10 +71,15 @@ offsetE = findOffsetX(10, map, comX, comY, 1, map.width - 1, 0, map.height - 1)
 offsetS = findOffsetY(2, map, comX, comY, -1, 0, 0, map.width - 1)
 offsetN = findOffsetY(10, map, comX, comY, 1, map.height - 1, 0, map.width - 1)
 
+print("offsetW:", offsetW, "offsetE:", offsetE,
+    "offsetS:", offsetS, "offsetN:", offsetN)
+
 left = 0 if comX < offsetW else comX - offsetW
 right = map.width - 1 if comX + offsetE >= map.width else comX + offsetE
 bottom = 0 if comY < offsetS else comY - offsetS
 top = map.height - 1 if comY + offsetN >= map.height else comY + offsetN
+
+print("left:", left, "bottom:", bottom, "right:", right, "top:", top)
 
 for x in range(map.width):
     for y in range(map.height):
@@ -114,14 +121,10 @@ for x in range(left, right + 1):
         map.foreground[x][y] = True
 #-------------------------------------------------------------------------------
 
-print("centerOfMass:", map.centerOfMass)
-map.paintBlock(comX, comY, (0, 0, 255))
-
 map.findCenterOfMass()
 comX, comY = map.centerOfMass
 
 print("centerOfMass:", map.centerOfMass)
-map.paintBlock(comX, comY, (0, 255, 0))
 
 centerOffsetX = map.width // 2 - comX
 centerOffsetY = map.height // 2 - comY
@@ -130,13 +133,9 @@ print("centerOffsetX:", centerOffsetX, "centerOffsetY:", centerOffsetY)
 
 #-------------------------------------------------------------------------------
 
-map.cleanBackground()
+bmp.makeFile(path + image + ".procesada.bmp")
 
-#-------------------------------------------------------------------------------
-
-bmp.makeFile(path + image + ".centered.bmp")
-
-with open(path + image + ".centered.bmp", "rb") as f:
+with open(path + image + ".procesada.bmp", "rb") as f:
     bmpCopy = BitmapFile(bytearray(f.read()))
 
 mapCopy = SectionRaster(bmpCopy, 8)
@@ -160,20 +159,116 @@ for x in range(map.width):
         if not mapCopy.foreground[x][y]:
             mapCopy.paintBlock(x, y, (255, 255, 255))
 
-bmpCopy.makeFile(path + image + ".centered.bmp")
+map = mapCopy
+bmp = bmpCopy
+map.centerOfMass = (map.width // 2, map.height // 2)
+comX, comY = map.centerOfMass
 
 #-------------------------------------------------------------------------------
-print("offsetW:", offsetW, "offsetE:", offsetE,
-    "offsetS:", offsetS, "offsetN:", offsetN)
-print("left:", left, "bottom:", bottom, "right:", right, "top:", top)
-map.paintBlock(map.width // 2, map.height // 2, (255, 0, 0))
-map.paintBlock(left, bottom, (0, 0, 255))
-map.paintBlock(right, bottom, (0, 0, 255))
-map.paintBlock(left, top, (0, 0, 255))
-map.paintBlock(right, top, (0, 0, 255))
+
+middleLeftmost = comX
+while map.foreground[middleLeftmost-1][comY]:
+    middleLeftmost -= 1
+
+print("middleLeftmost:", middleLeftmost)
+
+leftEdge = [(middleLeftmost, comY)]
+
+initX, initY = (middleLeftmost, comY)
+while True:
+    initY += 1
+    initValue = map.foreground[initX][initY]
+    
+    x, y = (initX, initY)
+    while initValue == map.foreground[x][y] and not abs(initX - x) > 1:
+        if not map.foreground[x][y]:
+            x += 1
+        elif map.foreground[x-1][y]:
+            x -= 1
+        else:
+            break
+    if abs(initX - x) > 1:
+        break
+    else:
+        leftEdge.append((x, y))
+        initX, initY = (x, y)
+#
+initX, initY = (middleLeftmost, comY)
+while True:
+    initY -= 1
+    initValue = map.foreground[initX][initY]
+    
+    x, y = (initX, initY)
+    while initValue == map.foreground[x][y] and not abs(initX - x) > 1:
+        if not map.foreground[x][y]:
+            x += 1
+        elif map.foreground[x-1][y]:
+            x -= 1
+        else:
+            break
+    if abs(initX - x) > 1:
+        break
+    else:
+        leftEdge.append((x, y))
+        initX, initY = (x, y)
+#
+#
+middleRightmost = comX
+while map.foreground[middleRightmost+1][comY]:
+    middleRightmost += 1
+
+print("middleRightmost:", middleRightmost)
+
+rightEdge = [(middleRightmost, comY)]
+
+initX, initY = (middleRightmost, comY)
+while True:
+    initY += 1
+    initValue = map.foreground[initX][initY]
+    
+    x, y = (initX, initY)
+    while initValue == map.foreground[x][y] and not abs(initX - x) > 1:
+        if not map.foreground[x][y]:
+            x -= 1
+        elif map.foreground[x+1][y]:
+            x += 1
+        else:
+            break
+    if abs(initX - x) > 1:
+        break
+    else:
+        rightEdge.append((x, y))
+        initX, initY = (x, y)
+#
+initX, initY = (middleRightmost, comY)
+while True:
+    initY -= 1
+    initValue = map.foreground[initX][initY]
+    
+    x, y = (initX, initY)
+    while initValue == map.foreground[x][y] and not abs(initX - x) > 1:
+        if not map.foreground[x][y]:
+            x -= 1
+        elif map.foreground[x+1][y]:
+            x += 1
+        else:
+            break
+    if abs(initX - x) > 1:
+        break
+    else:
+        rightEdge.append((x, y))
+        initX, initY = (x, y)
+#
+for i in range(len(leftEdge)):
+    x, y = leftEdge[i]
+    map.paintBlock(x, y, (0, 0, 255))
+#
+for i in range(len(rightEdge)):
+    x, y = rightEdge[i]
+    map.paintBlock(x, y, (0, 0, 255))
+
 #-------------------------------------------------------------------------------
 
+#bmpCopy.makeFile(path + image + ".procesada.bmp")
 bmp.makeFile(path + image + ".procesada.bmp")
 print(path + image + ".procesada.bmp")
-
-
