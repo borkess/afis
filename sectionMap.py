@@ -8,29 +8,29 @@ script, path, image = argv
 with open(path + image, "rb") as f:
     bmp = BitmapFile(bytearray(f.read()))
 
-map = SectionRaster(bmp, 8)
-print("map.width:", map.width, "map.height:", map.height)
+mapa = SectionRaster(bmp, 8)
+print("map.width:", mapa.width, "map.height:", mapa.height)
 
-map.calculateMinima()
+mapa.calculateMinima()
 
-print("map.minimum:", map.minimum, "map.maximum:", map.maximum)
+print("map.minimum:", mapa.minimum, "map.maximum:", mapa.maximum)
 
-map.calculateThreshold()
+mapa.calculateThreshold()
 
-print("map.threshold:", map.threshold)
+print("map.threshold:", mapa.threshold)
 
-map.findForeground()
+mapa.findForeground()
 
-map.erodeForeground()
-map.erodeForeground()
-map.erodeForeground()
+mapa.erodeForeground()
+mapa.erodeForeground()
+mapa.erodeForeground()
 
-map.findCenterOfMass()
+mapa.findCenterOfMass()
 
-print("centerOfMass:", map.centerOfMass)
+print("centerOfMass:", mapa.centerOfMass)
 
 #-------------------------------------------------------------------------------
-comX, comY = map.centerOfMass
+comX, comY = mapa.centerOfMass
 
 def findOffsetX(offset, map, comX, comY, sign, limit, bottom, top):
     edge = False
@@ -66,25 +66,25 @@ def findOffsetY(offset, map, comX, comY, sign, limit, left, right):
                 edge = True
     return offset
 
-offsetW = findOffsetX(10, map, comX, comY, -1, 0, 0, map.height - 1)
-offsetE = findOffsetX(10, map, comX, comY, 1, map.width - 1, 0, map.height - 1)
-offsetS = findOffsetY(2, map, comX, comY, -1, 0, 0, map.width - 1)
-offsetN = findOffsetY(10, map, comX, comY, 1, map.height - 1, 0, map.width - 1)
+offsetW = findOffsetX(10, mapa, comX, comY, -1, 0, 0, mapa.height - 1)
+offsetE = findOffsetX(10, mapa, comX, comY, 1, mapa.width - 1, 0, mapa.height - 1)
+offsetS = findOffsetY(2, mapa, comX, comY, -1, 0, 0, mapa.width - 1)
+offsetN = findOffsetY(10, mapa, comX, comY, 1, mapa.height - 1, 0, mapa.width - 1)
 
 print("offsetW:", offsetW, "offsetE:", offsetE,
     "offsetS:", offsetS, "offsetN:", offsetN)
 
 left = 0 if comX < offsetW else comX - offsetW
-right = map.width - 1 if comX + offsetE >= map.width else comX + offsetE
+right = mapa.width - 1 if comX + offsetE >= mapa.width else comX + offsetE
 bottom = 0 if comY < offsetS else comY - offsetS
-top = map.height - 1 if comY + offsetN >= map.height else comY + offsetN
+top = mapa.height - 1 if comY + offsetN >= mapa.height else comY + offsetN
 
 print("left:", left, "bottom:", bottom, "right:", right, "top:", top)
 
-for x in range(map.width):
-    for y in range(map.height):
+for x in range(mapa.width):
+    for y in range(mapa.height):
         if (x < left or  x > right) or (y < bottom or y > top):
-            map.foreground[x][y] = False
+            mapa.foreground[x][y] = False
 
 for y in range(bottom, top + 1):
     xl = right
@@ -94,14 +94,14 @@ for y in range(bottom, top + 1):
     for x in range(right - left):
         if xlf and xrf:
             break
-        if map.foreground[left + x][y] and not xlf:
+        if mapa.foreground[left + x][y] and not xlf:
             xl = left + x
             xlf = True
-        if map.foreground[right - x][y] and not xrf:
+        if mapa.foreground[right - x][y] and not xrf:
             xr = right - x
             xrf = True
     for x in range(xl, xr + 1):
-        map.foreground[x][y] = True
+        mapa.foreground[x][y] = True
 
 for x in range(left, right + 1):
     yb = bottom
@@ -111,23 +111,23 @@ for x in range(left, right + 1):
     for y in range(top - bottom):
         if ybf and ytf:
             break
-        if map.foreground[x][bottom + y] and not ybf:
+        if mapa.foreground[x][bottom + y] and not ybf:
             yb = bottom + y
             ybf = True
-        if map.foreground[x][top - y] and not ytf:
+        if mapa.foreground[x][top - y] and not ytf:
             yt = top - y
             ytf = True
     for y in range(yb, yt + 1):
-        map.foreground[x][y] = True
+        mapa.foreground[x][y] = True
 #-------------------------------------------------------------------------------
 
-map.findCenterOfMass()
-comX, comY = map.centerOfMass
+mapa.findCenterOfMass()
+comX, comY = mapa.centerOfMass
 
-print("centerOfMass:", map.centerOfMass)
+print("centerOfMass:", mapa.centerOfMass)
 
-centerOffsetX = map.width // 2 - comX
-centerOffsetY = map.height // 2 - comY
+centerOffsetX = mapa.width // 2 - comX
+centerOffsetY = mapa.height // 2 - comY
 
 print("centerOffsetX:", centerOffsetX, "centerOffsetY:", centerOffsetY)
 
@@ -140,9 +140,9 @@ with open(path + image + ".procesada.bmp", "rb") as f:
 
 mapCopy = SectionRaster(bmpCopy, 8)
 
-for x in range(map.width):
-    for y in range(map.height):
-        if map.foreground[x][y]:
+for x in range(mapa.width):
+    for y in range(mapa.height):
+        if mapa.foreground[x][y]:
             mapCopy.foreground[x+centerOffsetX][y+centerOffsetY] = True
             blockStart = (mapCopy.bmp.start +
                 x * mapCopy.pixelSize * mapCopy.bmp.bpp +
@@ -155,19 +155,19 @@ for x in range(map.width):
                     idxCopy = (idx +
                         centerOffsetX * mapCopy.pixelSize * mapCopy.bmp.bpp +
                         centerOffsetY * mapCopy.pixelSize * mapCopy.bmp.width * mapCopy.bmp.bpp)
-                    mapCopy.bmp.data[idxCopy:idxCopy+3] = map.bmp.data[idx:idx+3]
+                    mapCopy.bmp.data[idxCopy:idxCopy+3] = mapa.bmp.data[idx:idx+3]
         if not mapCopy.foreground[x][y]:
             mapCopy.paintBlock(x, y, (255, 255, 255))
 
-map = mapCopy
+mapa = mapCopy
 bmp = bmpCopy
-map.centerOfMass = (map.width // 2, map.height // 2)
-comX, comY = map.centerOfMass
+mapa.centerOfMass = (mapa.width // 2, mapa.height // 2)
+comX, comY = mapa.centerOfMass
 
 #-------------------------------------------------------------------------------
 
 middleLeftmost = comX
-while map.foreground[middleLeftmost-1][comY]:
+while mapa.foreground[middleLeftmost-1][comY]:
     middleLeftmost -= 1
 
 print("middleLeftmost:", middleLeftmost)
@@ -177,13 +177,13 @@ leftEdge = [(middleLeftmost, comY)]
 initX, initY = (middleLeftmost, comY)
 while True:
     initY += 1
-    initValue = map.foreground[initX][initY]
+    initValue = mapa.foreground[initX][initY]
     
     x, y = (initX, initY)
-    while initValue == map.foreground[x][y] and not abs(initX - x) > 1:
-        if not map.foreground[x][y]:
+    while initValue == mapa.foreground[x][y] and not abs(initX - x) > 1:
+        if not mapa.foreground[x][y]:
             x += 1
-        elif map.foreground[x-1][y]:
+        elif mapa.foreground[x-1][y]:
             x -= 1
         else:
             break
@@ -196,13 +196,13 @@ while True:
 initX, initY = (middleLeftmost, comY)
 while True:
     initY -= 1
-    initValue = map.foreground[initX][initY]
+    initValue = mapa.foreground[initX][initY]
     
     x, y = (initX, initY)
-    while initValue == map.foreground[x][y] and not abs(initX - x) > 1:
-        if not map.foreground[x][y]:
+    while initValue == mapa.foreground[x][y] and not abs(initX - x) > 1:
+        if not mapa.foreground[x][y]:
             x += 1
-        elif map.foreground[x-1][y]:
+        elif mapa.foreground[x-1][y]:
             x -= 1
         else:
             break
@@ -214,7 +214,7 @@ while True:
 #
 #
 middleRightmost = comX
-while map.foreground[middleRightmost+1][comY]:
+while mapa.foreground[middleRightmost+1][comY]:
     middleRightmost += 1
 
 print("middleRightmost:", middleRightmost)
@@ -224,13 +224,13 @@ rightEdge = [(middleRightmost, comY)]
 initX, initY = (middleRightmost, comY)
 while True:
     initY += 1
-    initValue = map.foreground[initX][initY]
+    initValue = mapa.foreground[initX][initY]
     
     x, y = (initX, initY)
-    while initValue == map.foreground[x][y] and not abs(initX - x) > 1:
-        if not map.foreground[x][y]:
+    while initValue == mapa.foreground[x][y] and not abs(initX - x) > 1:
+        if not mapa.foreground[x][y]:
             x -= 1
-        elif map.foreground[x+1][y]:
+        elif mapa.foreground[x+1][y]:
             x += 1
         else:
             break
@@ -243,13 +243,13 @@ while True:
 initX, initY = (middleRightmost, comY)
 while True:
     initY -= 1
-    initValue = map.foreground[initX][initY]
+    initValue = mapa.foreground[initX][initY]
     
     x, y = (initX, initY)
-    while initValue == map.foreground[x][y] and not abs(initX - x) > 1:
-        if not map.foreground[x][y]:
+    while initValue == mapa.foreground[x][y] and not abs(initX - x) > 1:
+        if not mapa.foreground[x][y]:
             x -= 1
-        elif map.foreground[x+1][y]:
+        elif mapa.foreground[x+1][y]:
             x += 1
         else:
             break
@@ -259,13 +259,64 @@ while True:
         rightEdge.append((x, y))
         initX, initY = (x, y)
 #
+#
+middleTopmost = comY
+while mapa.foreground[comX][middleTopmost+1]:
+    middleTopmost += 1
+
+print("middleTopmost:", middleTopmost)
+
+topEdge = [(comX, middleTopmost)]
+
+initX, initY = (comX, middleTopmost)
+while True:
+    initX += 1
+    initValue = mapa.foreground[initX][initY]
+
+    x, y = (initX, initY)
+    while initValue == mapa.foreground[x][y] and not abs(initY - y) > 1:
+        if not mapa.foreground[x][y]:
+            y -= 1
+        elif mapa.foreground[x][y+1]:
+            y += 1
+        else:
+            break
+    if abs(initY - y) > 1:
+        break
+    else:
+        topEdge.append((x, y))
+        initX, initY = (x, y)
+#
+initX, initY = (comX, middleTopmost)
+while True:
+    initX -= 1
+    initValue = mapa.foreground[initX][initY]
+
+    x, y = (initX, initY)
+    while initValue == mapa.foreground[x][y] and not abs(initY - y) > 1:
+        if not mapa.foreground[x][y]:
+            y -= 1
+        elif mapa.foreground[x][y+1]:
+            y += 1
+        else:
+            break
+    if abs(initY - y) > 1:
+        break
+    else:
+        topEdge.append((x, y))
+        initX, initY = (x, y)
+#
 for i in range(len(leftEdge)):
     x, y = leftEdge[i]
-    map.paintBlock(x, y, (0, 0, 255))
+    mapa.paintBlock(x, y, (0, 0, 255))
 #
 for i in range(len(rightEdge)):
     x, y = rightEdge[i]
-    map.paintBlock(x, y, (0, 0, 255))
+    mapa.paintBlock(x, y, (0, 255, 0))
+#
+for i in range(len(topEdge)):
+    x, y = topEdge[i]
+    mapa.paintBlock(x, y, (255, 0, 0))
 
 #-------------------------------------------------------------------------------
 
