@@ -9,15 +9,15 @@ with open(path + image, "rb") as f:
     bmp = BitmapFile(bytearray(f.read()))
 
 mapa = SectionRaster(bmp, 8)
-print("map.width:", mapa.width, "map.height:", mapa.height)
+#print("map.width:", mapa.width, "map.height:", mapa.height)
 
 mapa.calculateMinima()
 
-print("map.minimum:", mapa.minimum, "map.maximum:", mapa.maximum)
+#print("map.minimum:", mapa.minimum, "map.maximum:", mapa.maximum)
 
 mapa.calculateThreshold()
 
-print("map.threshold:", mapa.threshold)
+#print("map.threshold:", mapa.threshold)
 
 mapa.findForeground()
 
@@ -27,7 +27,7 @@ mapa.erodeForeground()
 
 mapa.findCenterOfMass()
 
-print("centerOfMass:", mapa.centerOfMass)
+#print("centerOfMass:", mapa.centerOfMass)
 
 #-------------------------------------------------------------------------------
 comX, comY = mapa.centerOfMass
@@ -71,15 +71,14 @@ offsetE = findOffsetX(10, mapa, comX, comY, 1, mapa.width - 1, 0, mapa.height - 
 offsetS = findOffsetY(2, mapa, comX, comY, -1, 0, 0, mapa.width - 1)
 offsetN = findOffsetY(10, mapa, comX, comY, 1, mapa.height - 1, 0, mapa.width - 1)
 
-print("offsetW:", offsetW, "offsetE:", offsetE,
-    "offsetS:", offsetS, "offsetN:", offsetN)
+#print("offsetW:", offsetW, "offsetE:", offsetE, "offsetS:", offsetS, "offsetN:", offsetN)
 
 left = 0 if comX < offsetW else comX - offsetW
 right = mapa.width - 1 if comX + offsetE >= mapa.width else comX + offsetE
 bottom = 0 if comY < offsetS else comY - offsetS
 top = mapa.height - 1 if comY + offsetN >= mapa.height else comY + offsetN
 
-print("left:", left, "bottom:", bottom, "right:", right, "top:", top)
+#print("left:", left, "bottom:", bottom, "right:", right, "top:", top)
 
 for x in range(mapa.width):
     for y in range(mapa.height):
@@ -124,18 +123,18 @@ for x in range(left, right + 1):
 mapa.findCenterOfMass()
 comX, comY = mapa.centerOfMass
 
-print("centerOfMass:", mapa.centerOfMass)
+#print("centerOfMass:", mapa.centerOfMass)
 
 centerOffsetX = mapa.width // 2 - comX
 centerOffsetY = mapa.height // 2 - comY
 
-print("centerOffsetX:", centerOffsetX, "centerOffsetY:", centerOffsetY)
+#print("centerOffsetX:", centerOffsetX, "centerOffsetY:", centerOffsetY)
 
 #-------------------------------------------------------------------------------
 
-bmp.makeFile(path + image + ".procesada.bmp")
+bmp.makeFile(path + image + ".lines.bmp")
 
-with open(path + image + ".procesada.bmp", "rb") as f:
+with open(path + image + ".lines.bmp", "rb") as f:
     bmpCopy = BitmapFile(bytearray(f.read()))
 
 mapCopy = SectionRaster(bmpCopy, 8)
@@ -170,7 +169,7 @@ middleLeftmost = comX
 while mapa.foreground[middleLeftmost-1][comY]:
     middleLeftmost -= 1
 
-print("middleLeftmost:", middleLeftmost)
+#print("middleLeftmost:", middleLeftmost)
 
 leftEdge = [(middleLeftmost, comY)]
 
@@ -178,7 +177,7 @@ initX, initY = (middleLeftmost, comY)
 while True:
     initY += 1
     initValue = mapa.foreground[initX][initY]
-    
+
     x, y = (initX, initY)
     while initValue == mapa.foreground[x][y] and not abs(initX - x) > 1:
         if not mapa.foreground[x][y]:
@@ -197,7 +196,7 @@ initX, initY = (middleLeftmost, comY)
 while True:
     initY -= 1
     initValue = mapa.foreground[initX][initY]
-    
+
     x, y = (initX, initY)
     while initValue == mapa.foreground[x][y] and not abs(initX - x) > 1:
         if not mapa.foreground[x][y]:
@@ -217,7 +216,7 @@ middleRightmost = comX
 while mapa.foreground[middleRightmost+1][comY]:
     middleRightmost += 1
 
-print("middleRightmost:", middleRightmost)
+#print("middleRightmost:", middleRightmost)
 
 rightEdge = [(middleRightmost, comY)]
 
@@ -225,7 +224,7 @@ initX, initY = (middleRightmost, comY)
 while True:
     initY += 1
     initValue = mapa.foreground[initX][initY]
-    
+
     x, y = (initX, initY)
     while initValue == mapa.foreground[x][y] and not abs(initX - x) > 1:
         if not mapa.foreground[x][y]:
@@ -244,7 +243,7 @@ initX, initY = (middleRightmost, comY)
 while True:
     initY -= 1
     initValue = mapa.foreground[initX][initY]
-    
+
     x, y = (initX, initY)
     while initValue == mapa.foreground[x][y] and not abs(initX - x) > 1:
         if not mapa.foreground[x][y]:
@@ -264,7 +263,7 @@ middleTopmost = comY
 while mapa.foreground[comX][middleTopmost+1]:
     middleTopmost += 1
 
-print("middleTopmost:", middleTopmost)
+#print("middleTopmost:", middleTopmost)
 
 topEdge = [(comX, middleTopmost)]
 
@@ -305,6 +304,18 @@ while True:
     else:
         topEdge.append((x, y))
         initX, initY = (x, y)
+#
+for i in range(len(leftEdge)):
+    x, y = leftEdge[i]
+    mapa.paintBlock(x, y, (255, 0, 0))
+#
+for i in range(len(rightEdge)):
+    x, y = rightEdge[i]
+    mapa.paintBlock(x, y, (0, 0, 255))
+#
+for i in range(len(topEdge)):
+    x, y = topEdge[i]
+    mapa.paintBlock(x, y, (0, 255, 0))
 
 #-------------------------------------------------------------------------------
 
@@ -321,6 +332,7 @@ def horizontalLineSlope(pointList):
 
     a = (xy * n - x * y) / (x2 * n - x * x)
     b = (x2 * y - xy * x) / (x2 * n - x * x)
+    #print("y =", a, "x", "+", b)
     return (a, b)
 
 def verticalLineSlope(pointList):
@@ -336,50 +348,49 @@ def verticalLineSlope(pointList):
 
     a = (xy * n - x * y) / (x2 * n - x * x)
     b = (x2 * y - xy * x) / (x2 * n - x * x)
+    #print("y =", a, "x", "+", b)
     return (a, b)
-
+"""
+for x in range(mapa.width):
+    y = round(x + mapa.height//2)
+    if y in range(mapa.height):
+        mapa.paintBlock(x, y, (255, 255, 0))
+for x in range(mapa.width):
+    y = round(-x + mapa.height//2)
+    if y in range(mapa.height):
+        mapa.paintBlock(x, y, (0, 255, 255))
+"""
 mPromedio = 0
 
 m, b = horizontalLineSlope(topEdge)
 mPromedio += -m / 3
+for x in range(mapa.width):
+    y = round(m * x + b)
+    if y in range(mapa.height):
+        mapa.paintBlock(x, y, (0, 255, 0))
 
 m, b = verticalLineSlope(leftEdge)
 mPromedio += m / 3
+for x in range(mapa.width):
+    y = round(m * x + b)
+    if y in range(mapa.height):
+        mapa.paintBlock(y, x, (255, 0, 0))
 
 m, b = verticalLineSlope(rightEdge)
 mPromedio += m / 3
+for x in range(mapa.width):
+    y = round(m * x + b)
+    if y in range(mapa.height):
+       mapa.paintBlock(y, x, (0, 0, 255))
 
-print("mPromedio:", mPromedio)
-
-bmp.makeFile(path + image + ".procesada.bmp")
-
-with open(path + image + ".procesada.bmp", "rb") as f:
-    bmpRotated = BitmapFile(bytearray(f.read()))
-
-#mapCopy = SectionRaster(bmpCopy, 8)
-
-for i in range(bmp.start, bmp.start + bmp.width * bmp.height * bmp.bpp, bmp.bpp):
-    bmpRotated.data[i:i+3] = (255, 255, 255)
-
-for i in range(bmp.start, bmp.start + bmp.width * bmp.height * bmp.bpp, bmp.bpp):
-    if bmp.data[i:i+3] != (255, 255, 255):
-        pixelX = (i - bmp.start) // bmp.bpp % bmp.width
-        pixelY = (i - bmp.start) // bmp.bpp // bmp.width
-        newY = round(pixelX * mPromedio + pixelY)
-        newX = round(pixelY * -mPromedio + pixelX)
-        idx = bmp.start + newX * bmp.bpp + newY * bmp.width * bmp.bpp
-        if newX in range(bmp.width) and newY in range(bmp.height):
-            bmpRotated.data[idx:idx+3] = bmp.data[i:i+3]
-"""
+#print("mPromedio:", mPromedio)
 for x in range(mapa.width):
     y = round(mPromedio * x + mapa.height//2)
     if y in range(mapa.height):
        mapa.paintBlock(x, y, (0, 0, 0))
-"""
-
 
 #-------------------------------------------------------------------------------
 
-#bmp.makeFile(path + image + ".procesada.bmp")
-bmpRotated.makeFile(path + image + ".procesada.bmp")
-print(path + image + ".procesada.bmp")
+#bmpCopy.makeFile(path + image + ".lines.bmp")
+bmp.makeFile(path + image + ".lines.bmp")
+#print(path + image + ".lines.bmp")
