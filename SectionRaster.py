@@ -8,6 +8,7 @@ class SectionRaster:
         self.maximum = 0
         self.centerOfMass = (self.width // 2, self.height // 2)
         self.minima = [[255 for y in range(self.height)] for x in range(self.width)]
+        self.averages = [[0 for y in range(self.height)] for x in range(self.width)]
         self.threshold = 255
         self.foreground = [[False for y in range(self.height)] for x in range(self.width)]
     
@@ -21,6 +22,15 @@ class SectionRaster:
                 self.minimum = self.bmp.data[i]
             if self.bmp.data[i] > self.maximum:
                 self.maximum = self.bmp.data[i]
+
+    def calculateAverages(self):
+        for i in range(self.bmp.start, self.bmp.start + self.bmp.width * self.bmp.height * self.bmp.bpp, self.bmp.bpp):
+            pixelX = (i-self.bmp.start) // self.bmp.bpp % self.bmp.width // self.pixelSize
+            pixelY = (i-self.bmp.start) // self.bmp.bpp // (self.bmp.width * self.pixelSize)
+            self.averages[pixelX][pixelY] += self.bmp.data[i]
+        for x in range(self.width):
+            for y in range(self.height):
+                self.averages[x][y] = self.averages[x][y] / self.pixelSize ** 2
 
     def calculateThreshold(self):
         factorDelta = 10

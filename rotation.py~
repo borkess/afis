@@ -10,15 +10,15 @@ with open(path + image, "rb") as f:
     bmp = BitmapFile(bytearray(f.read()))
 
 mapa = SectionRaster(bmp, 8)
-print("map.width:", mapa.width, "map.height:", mapa.height)
+#print("map.width:", mapa.width, "map.height:", mapa.height)
 
 mapa.calculateMinima()
 
-print("map.minimum:", mapa.minimum, "map.maximum:", mapa.maximum)
+#print("map.minimum:", mapa.minimum, "map.maximum:", mapa.maximum)
 
 mapa.calculateThreshold()
 
-print("map.threshold:", mapa.threshold)
+#print("map.threshold:", mapa.threshold)
 
 mapa.findForeground()
 
@@ -28,7 +28,7 @@ mapa.erodeForeground()
 
 mapa.findCenterOfMass()
 
-print("centerOfMass:", mapa.centerOfMass)
+#print("centerOfMass:", mapa.centerOfMass)
 
 #-------------------------------------------------------------------------------
 comX, comY = mapa.centerOfMass
@@ -72,15 +72,14 @@ offsetE = findOffsetX(10, mapa, comX, comY, 1, mapa.width - 1, 0, mapa.height - 
 offsetS = findOffsetY(2, mapa, comX, comY, -1, 0, 0, mapa.width - 1)
 offsetN = findOffsetY(10, mapa, comX, comY, 1, mapa.height - 1, 0, mapa.width - 1)
 
-print("offsetW:", offsetW, "offsetE:", offsetE,
-    "offsetS:", offsetS, "offsetN:", offsetN)
+#print("offsetW:", offsetW, "offsetE:", offsetE, "offsetS:", offsetS, "offsetN:", offsetN)
 
 left = 0 if comX < offsetW else comX - offsetW
 right = mapa.width - 1 if comX + offsetE >= mapa.width else comX + offsetE
 bottom = 0 if comY < offsetS else comY - offsetS
 top = mapa.height - 1 if comY + offsetN >= mapa.height else comY + offsetN
 
-print("left:", left, "bottom:", bottom, "right:", right, "top:", top)
+#print("left:", left, "bottom:", bottom, "right:", right, "top:", top)
 
 for x in range(mapa.width):
     for y in range(mapa.height):
@@ -125,12 +124,12 @@ for x in range(left, right + 1):
 mapa.findCenterOfMass()
 comX, comY = mapa.centerOfMass
 
-print("centerOfMass:", mapa.centerOfMass)
+#print("centerOfMass:", mapa.centerOfMass)
 
 centerOffsetX = mapa.width // 2 - comX
 centerOffsetY = mapa.height // 2 - comY
 
-print("centerOffsetX:", centerOffsetX, "centerOffsetY:", centerOffsetY)
+#print("centerOffsetX:", centerOffsetX, "centerOffsetY:", centerOffsetY)
 
 #-------------------------------------------------------------------------------
 
@@ -171,7 +170,7 @@ middleLeftmost = comX
 while mapa.foreground[middleLeftmost-1][comY]:
     middleLeftmost -= 1
 
-print("middleLeftmost:", middleLeftmost)
+#print("middleLeftmost:", middleLeftmost)
 
 leftEdge = [(middleLeftmost, comY)]
 
@@ -218,7 +217,7 @@ middleRightmost = comX
 while mapa.foreground[middleRightmost+1][comY]:
     middleRightmost += 1
 
-print("middleRightmost:", middleRightmost)
+#print("middleRightmost:", middleRightmost)
 
 rightEdge = [(middleRightmost, comY)]
 
@@ -265,7 +264,7 @@ middleTopmost = comY
 while mapa.foreground[comX][middleTopmost+1]:
     middleTopmost += 1
 
-print("middleTopmost:", middleTopmost)
+#print("middleTopmost:", middleTopmost)
 
 topEdge = [(comX, middleTopmost)]
 
@@ -350,7 +349,7 @@ mAverage += m / 3
 m, b = verticalLineSlope(rightEdge)
 mAverage += m / 3
 
-print("mAverage:", mAverage)
+#print("mAverage:", mAverage)
 
 bmp.makeFile(path + image + ".procesada.bmp")
 """
@@ -421,28 +420,9 @@ for x in range(mapa.width):
 
 bmp.data = bmpRotatedData
 
-#-------------------------------------------------------------------------------
-
-mapaBinarizacion = SectionRaster(bmp, 8)
-
-mapaBinarizacion.calculateAverages()
-
-for x in range(mapaBinarizacion.width):
-    for y in range(mapaBinarizacion.height):
-        if mapaBinarizacion.averages[x][y] < 255:
-            blockStart = (mapaBinarizacion.bmp.start +
-                          x * mapaBinarizacion.pixelSize * mapaBinarizacion.bmp.bpp +
-                          y * mapaBinarizacion.bmp.width * mapaBinarizacion.pixelSize * mapaBinarizacion.bmp.bpp)
-            for i in range(mapaBinarizacion.pixelSize):
-                for j in range(mapaBinarizacion.pixelSize):
-                    idx = (blockStart +
-                           i * mapaBinarizacion.bmp.bpp +
-                           j * mapaBinarizacion.bmp.width * mapaBinarizacion.bmp.bpp)
-                    mapaBinarizacion.bmp.data[idx:idx+3] = (
-                        (0, 0, 0) if (mapaBinarizacion.bmp.data[idx] <= mapaBinarizacion.averages[x][y]) else (255, 255, 255)
-                    )
 
 #-------------------------------------------------------------------------------
 
-mapaBinarizacion.bmp.makeFile(path + image + ".procesada.bmp")
-print(path + image + ".procesada.bmp")
+bmp.makeFile(path + image + ".procesada.bmp")
+#bmpRotated.makeFile(path + image + ".procesada.bmp")
+#print(path + image + ".procesada.bmp")
