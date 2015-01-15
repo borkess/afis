@@ -1,5 +1,6 @@
 from sys import argv
 import math
+import datetime
 
 from BitmapFile import BitmapFile
 from SectionRaster import SectionRaster
@@ -351,11 +352,9 @@ mAverage += m / 3
 
 #print("mAverage:", mAverage)
 
+#-------------------------------------------------------------------------------
+
 bmp.makeFile(path + image + ".rotated.bmp")
-"""
-with open(path + image + ".rotated.bmp", "rb") as f:
-    bmpRotated = BitmapFile(bytearray(f.read()))
-"""
 bmpWhiteData = bmp.data.copy()
 #mapCopy = SectionRaster(bmpCopy, 8)
 
@@ -363,63 +362,27 @@ for i in range(bmp.start, bmp.start + bmp.width * bmp.height * bmp.bpp, bmp.bpp)
     bmpWhiteData[i:i+3] = (255, 255, 255)
 
 bmpRotatedData = bmpWhiteData.copy()
-"""
-for i in range(bmp.start, bmp.start + bmp.width * bmp.height * bmp.bpp, bmp.bpp):
-    if bmp.data[i:i+3] != (255, 255, 255):
-        pixelX = (i - bmp.start) // bmp.bpp % bmp.width
-        pixelY = (i - bmp.start) // bmp.bpp // bmp.width
-        newY = round(pixelX * mAverage + pixelY)
-        newX = round(pixelY * -mAverage + pixelX)
-        idx = bmp.start + newX * bmp.bpp + newY * bmp.width * bmp.bpp
-        if newX in range(bmp.width) and newY in range(bmp.height):
-            bmpRotatedData[idx:idx+3] = bmp.data[i:i+3]
-"""
 angle = math.atan2(mAverage, 1)
 
-for i in range(bmp.start, bmp.start + bmp.width * bmp.height * bmp.bpp, bmp.bpp):
-    if bmp.data[i:i+3] != (255, 255, 255):
-        pixelX = (i - bmp.start) // bmp.bpp % bmp.width
-        pixelY = (i - bmp.start) // bmp.bpp // bmp.width
-        newX = round(pixelX - math.tan(angle/2) * pixelY)
-        newY = pixelY
-        idx = bmp.start + newX * bmp.bpp + newY * bmp.width * bmp.bpp
-        if newX in range(bmp.width) and newY in range(bmp.height):
-            bmpRotatedData[idx:idx+3] = bmp.data[i:i+3]
-
-bmp.data = bmpRotatedData
-bmpRotatedData = bmpWhiteData.copy()
+duracion = datetime.datetime.now()
 
 for i in range(bmp.start, bmp.start + bmp.width * bmp.height * bmp.bpp, bmp.bpp):
     if bmp.data[i:i+3] != (255, 255, 255):
         pixelX = (i - bmp.start) // bmp.bpp % bmp.width
         pixelY = (i - bmp.start) // bmp.bpp // bmp.width
-        newX = pixelX
-        newY = round(pixelX * math.sin(angle) + pixelY)
+
+        newX = round(round(pixelX - math.tan(angle/2) * pixelY) - math.tan(angle/2) * round(round(pixelX - math.tan(angle/2) * pixelY) * math.sin(angle) + pixelY))
+        newY = round(round(pixelX - math.tan(angle/2) * pixelY) * math.sin(angle) + pixelY)
+
         idx = bmp.start + newX * bmp.bpp + newY * bmp.width * bmp.bpp
         if newX in range(bmp.width) and newY in range(bmp.height):
             bmpRotatedData[idx:idx+3] = bmp.data[i:i+3]
 
 bmp.data = bmpRotatedData
-bmpRotatedData = bmpWhiteData.copy()
 
-for i in range(bmp.start, bmp.start + bmp.width * bmp.height * bmp.bpp, bmp.bpp):
-    if bmp.data[i:i+3] != (255, 255, 255):
-        pixelX = (i - bmp.start) // bmp.bpp % bmp.width
-        pixelY = (i - bmp.start) // bmp.bpp // bmp.width
-        newX = round(pixelX - math.tan(angle/2) * pixelY)
-        newY = pixelY
-        idx = bmp.start + newX * bmp.bpp + newY * bmp.width * bmp.bpp
-        if newX in range(bmp.width) and newY in range(bmp.height):
-            bmpRotatedData[idx:idx+3] = bmp.data[i:i+3]
-"""
-for x in range(mapa.width):
-    y = round(mPromedio * x + mapa.height//2)
-    if y in range(mapa.height):
-       mapa.paintBlock(x, y, (0, 0, 0))
-"""
+duracion = datetime.datetime.now() - duracion
 
-bmp.data = bmpRotatedData
-
+print("duracion: %r ms" % (duracion.microseconds / 1000))
 
 #-------------------------------------------------------------------------------
 
