@@ -133,9 +133,9 @@ centerOffsetY = mapa.height // 2 - comY
 
 #-------------------------------------------------------------------------------
 
-bmp.makeFile(path + image + ".procesada.bmp")
+bmp.makeFile(path + image + ".binarizada.bmp")
 
-with open(path + image + ".procesada.bmp", "rb") as f:
+with open(path + image + ".binarizada.bmp", "rb") as f:
     bmpCopy = BitmapFile(bytearray(f.read()))
 
 mapCopy = SectionRaster(bmpCopy, 8)
@@ -178,7 +178,7 @@ initX, initY = (middleLeftmost, comY)
 while True:
     initY += 1
     initValue = mapa.foreground[initX][initY]
-    
+
     x, y = (initX, initY)
     while initValue == mapa.foreground[x][y] and not abs(initX - x) > 1:
         if not mapa.foreground[x][y]:
@@ -197,7 +197,7 @@ initX, initY = (middleLeftmost, comY)
 while True:
     initY -= 1
     initValue = mapa.foreground[initX][initY]
-    
+
     x, y = (initX, initY)
     while initValue == mapa.foreground[x][y] and not abs(initX - x) > 1:
         if not mapa.foreground[x][y]:
@@ -225,7 +225,7 @@ initX, initY = (middleRightmost, comY)
 while True:
     initY += 1
     initValue = mapa.foreground[initX][initY]
-    
+
     x, y = (initX, initY)
     while initValue == mapa.foreground[x][y] and not abs(initX - x) > 1:
         if not mapa.foreground[x][y]:
@@ -244,7 +244,7 @@ initX, initY = (middleRightmost, comY)
 while True:
     initY -= 1
     initValue = mapa.foreground[initX][initY]
-    
+
     x, y = (initX, initY)
     while initValue == mapa.foreground[x][y] and not abs(initX - x) > 1:
         if not mapa.foreground[x][y]:
@@ -351,11 +351,9 @@ mAverage += m / 3
 
 #print("mAverage:", mAverage)
 
-bmp.makeFile(path + image + ".procesada.bmp")
-"""
-with open(path + image + ".procesada.bmp", "rb") as f:
-    bmpRotated = BitmapFile(bytearray(f.read()))
-"""
+#-------------------------------------------------------------------------------
+
+bmp.makeFile(path + image + ".binarizada.bmp")
 bmpWhiteData = bmp.data.copy()
 #mapCopy = SectionRaster(bmpCopy, 8)
 
@@ -363,66 +361,50 @@ for i in range(bmp.start, bmp.start + bmp.width * bmp.height * bmp.bpp, bmp.bpp)
     bmpWhiteData[i:i+3] = (255, 255, 255)
 
 bmpRotatedData = bmpWhiteData.copy()
-"""
-for i in range(bmp.start, bmp.start + bmp.width * bmp.height * bmp.bpp, bmp.bpp):
-    if bmp.data[i:i+3] != (255, 255, 255):
-        pixelX = (i - bmp.start) // bmp.bpp % bmp.width
-        pixelY = (i - bmp.start) // bmp.bpp // bmp.width
-        newY = round(pixelX * mAverage + pixelY)
-        newX = round(pixelY * -mAverage + pixelX)
-        idx = bmp.start + newX * bmp.bpp + newY * bmp.width * bmp.bpp
-        if newX in range(bmp.width) and newY in range(bmp.height):
-            bmpRotatedData[idx:idx+3] = bmp.data[i:i+3]
-"""
 angle = math.atan2(mAverage, 1)
 
 for i in range(bmp.start, bmp.start + bmp.width * bmp.height * bmp.bpp, bmp.bpp):
-    if bmp.data[i:i+3] != (255, 255, 255):
+    if bmp.data[i] != 255:
         pixelX = (i - bmp.start) // bmp.bpp % bmp.width
         pixelY = (i - bmp.start) // bmp.bpp // bmp.width
-        newX = round(pixelX - math.tan(angle/2) * pixelY)
-        newY = pixelY
+
+        newX = round(
+            round(pixelX - math.tan(angle/2) * pixelY) - math.tan(angle/2) *
+            round(round(pixelX - math.tan(angle/2) * pixelY) * math.sin(angle) + pixelY)
+        )
+        newY = round(
+            round(pixelX - math.tan(angle/2) * pixelY) * math.sin(angle) + pixelY
+        )
+
         idx = bmp.start + newX * bmp.bpp + newY * bmp.width * bmp.bpp
         if newX in range(bmp.width) and newY in range(bmp.height):
             bmpRotatedData[idx:idx+3] = bmp.data[i:i+3]
 
 bmp.data = bmpRotatedData
-bmpRotatedData = bmpWhiteData.copy()
-
-for i in range(bmp.start, bmp.start + bmp.width * bmp.height * bmp.bpp, bmp.bpp):
-    if bmp.data[i:i+3] != (255, 255, 255):
-        pixelX = (i - bmp.start) // bmp.bpp % bmp.width
-        pixelY = (i - bmp.start) // bmp.bpp // bmp.width
-        newX = pixelX
-        newY = round(pixelX * math.sin(angle) + pixelY)
-        idx = bmp.start + newX * bmp.bpp + newY * bmp.width * bmp.bpp
-        if newX in range(bmp.width) and newY in range(bmp.height):
-            bmpRotatedData[idx:idx+3] = bmp.data[i:i+3]
-
-bmp.data = bmpRotatedData
-bmpRotatedData = bmpWhiteData.copy()
-
-for i in range(bmp.start, bmp.start + bmp.width * bmp.height * bmp.bpp, bmp.bpp):
-    if bmp.data[i:i+3] != (255, 255, 255):
-        pixelX = (i - bmp.start) // bmp.bpp % bmp.width
-        pixelY = (i - bmp.start) // bmp.bpp // bmp.width
-        newX = round(pixelX - math.tan(angle/2) * pixelY)
-        newY = pixelY
-        idx = bmp.start + newX * bmp.bpp + newY * bmp.width * bmp.bpp
-        if newX in range(bmp.width) and newY in range(bmp.height):
-            bmpRotatedData[idx:idx+3] = bmp.data[i:i+3]
-"""
-for x in range(mapa.width):
-    y = round(mPromedio * x + mapa.height//2)
-    if y in range(mapa.height):
-       mapa.paintBlock(x, y, (0, 0, 0))
-"""
-
-bmp.data = bmpRotatedData
-
 
 #-------------------------------------------------------------------------------
 
-bmp.makeFile(path + image + ".procesada.bmp")
-#bmpRotated.makeFile(path + image + ".procesada.bmp")
-#print(path + image + ".procesada.bmp")
+mapaBinarizacion = SectionRaster(bmp, 16)
+
+mapaBinarizacion.calculateAverages()
+
+for x in range(mapaBinarizacion.width):
+    for y in range(mapaBinarizacion.height):
+        if mapaBinarizacion.averages[x][y] < 255:
+            blockStart = (mapaBinarizacion.bmp.start +
+                          x * mapaBinarizacion.pixelSize * mapaBinarizacion.bmp.bpp +
+                          y * mapaBinarizacion.bmp.width * mapaBinarizacion.pixelSize * mapaBinarizacion.bmp.bpp)
+            for i in range(mapaBinarizacion.pixelSize):
+                for j in range(mapaBinarizacion.pixelSize):
+                    idx = (blockStart +
+                           i * mapaBinarizacion.bmp.bpp +
+                           j * mapaBinarizacion.bmp.width * mapaBinarizacion.bmp.bpp)
+                    mapaBinarizacion.bmp.data[idx:idx+3] = (
+                        (0, 0, 0) if (mapaBinarizacion.bmp.data[idx] <= mapaBinarizacion.averages[x][y]) else (255, 255, 255)
+                        # (0, 0, 0) if (mapaBinarizacion.bmp.data[idx] <= mapaBinarizacion.average) else (255, 255, 255)
+                    )
+
+#-------------------------------------------------------------------------------
+
+mapaBinarizacion.bmp.makeFile(path + image + ".binarizada.bmp")
+#print(path + image + ".binarizada.bmp")

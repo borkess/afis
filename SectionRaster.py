@@ -9,6 +9,8 @@ class SectionRaster:
         self.centerOfMass = (self.width // 2, self.height // 2)
         self.minima = [[255 for y in range(self.height)] for x in range(self.width)]
         self.averages = [[0 for y in range(self.height)] for x in range(self.width)]
+        self.averagesCount = [[0 for y in range(self.height)] for x in range(self.width)]
+        self.average = 0
         self.threshold = 255
         self.foreground = [[False for y in range(self.height)] for x in range(self.width)]
     
@@ -24,13 +26,21 @@ class SectionRaster:
                 self.maximum = self.bmp.data[i]
 
     def calculateAverages(self):
+        count = 0
         for i in range(self.bmp.start, self.bmp.start + self.bmp.width * self.bmp.height * self.bmp.bpp, self.bmp.bpp):
             pixelX = (i-self.bmp.start) // self.bmp.bpp % self.bmp.width // self.pixelSize
             pixelY = (i-self.bmp.start) // self.bmp.bpp // (self.bmp.width * self.pixelSize)
-            self.averages[pixelX][pixelY] += self.bmp.data[i]
+            if self.bmp.data[i] < 255:
+                self.average += self.bmp.data[i]
+                count += 1
+                self.averages[pixelX][pixelY] += self.bmp.data[i]
+                self.averagesCount[pixelX][pixelY] += 1
+        self.average /= count
         for x in range(self.width):
             for y in range(self.height):
-                self.averages[x][y] = self.averages[x][y] / self.pixelSize ** 2
+                self.averages[x][y] = (
+                    255 if self.averagesCount[x][y] == 0 else self.averages[x][y] / self.averagesCount[x][y]
+                )
 
     def calculateThreshold(self):
         factorDelta = 10
@@ -44,7 +54,7 @@ class SectionRaster:
             
             for i in range(self.width):
                 for j in range(self.height):
-                    if isForeground not in (True,False):
+                    if isForeground not in (True, False):
                         isForeground = self.minima[i][j] <= threshold
                     if isForeground != (self.minima[i][j] <= threshold):
                         transitionCount += 1

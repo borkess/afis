@@ -22,3 +22,6 @@ class BitmapFile:
     def makeFile(self, filePath):
         with open(filePath, "wb") as f:
             f.write(self.data)
+
+    def findPixelIndex(self, x, y):
+        return self.start + x * self.bpp + y * self.width * self.bpp

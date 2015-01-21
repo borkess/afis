@@ -72,8 +72,7 @@ offsetE = findOffsetX(10, mapa, comX, comY, 1, mapa.width - 1, 0, mapa.height - 
 offsetS = findOffsetY(2, mapa, comX, comY, -1, 0, 0, mapa.width - 1)
 offsetN = findOffsetY(10, mapa, comX, comY, 1, mapa.height - 1, 0, mapa.width - 1)
 
-print("offsetW:", offsetW, "offsetE:", offsetE,
-    "offsetS:", offsetS, "offsetN:", offsetN)
+print("offsetW:", offsetW, "offsetE:", offsetE, "offsetS:", offsetS, "offsetN:", offsetN)
 
 left = 0 if comX < offsetW else comX - offsetW
 right = mapa.width - 1 if comX + offsetE >= mapa.width else comX + offsetE
@@ -365,7 +364,7 @@ bmpRotatedData = bmpWhiteData.copy()
 angle = math.atan2(mAverage, 1)
 
 for i in range(bmp.start, bmp.start + bmp.width * bmp.height * bmp.bpp, bmp.bpp):
-    if bmp.data[i:i+3] != (255, 255, 255):
+    if bmp.data[i] != 255:
         pixelX = (i - bmp.start) // bmp.bpp % bmp.width
         pixelY = (i - bmp.start) // bmp.bpp // bmp.width
 
@@ -378,14 +377,14 @@ for i in range(bmp.start, bmp.start + bmp.width * bmp.height * bmp.bpp, bmp.bpp)
         )
 
         idx = bmp.start + newX * bmp.bpp + newY * bmp.width * bmp.bpp
-        if newX in range(bmp.width) and newY in range(bmp.height):
+        if 0 <= newX < bmp.width and 0 <= newY < bmp.height:
             bmpRotatedData[idx:idx+3] = bmp.data[i:i+3]
 
 bmp.data = bmpRotatedData
 
 #-------------------------------------------------------------------------------
 
-mapaBinarizacion = SectionRaster(bmp, 8)
+mapaBinarizacion = SectionRaster(bmp, 16)
 
 mapaBinarizacion.calculateAverages()
 
@@ -402,9 +401,56 @@ for x in range(mapaBinarizacion.width):
                            j * mapaBinarizacion.bmp.width * mapaBinarizacion.bmp.bpp)
                     mapaBinarizacion.bmp.data[idx:idx+3] = (
                         (0, 0, 0) if (mapaBinarizacion.bmp.data[idx] <= mapaBinarizacion.averages[x][y]) else (255, 255, 255)
+                        # (0, 0, 0) if (mapaBinarizacion.bmp.data[idx] <= mapaBinarizacion.average) else (255, 255, 255)
                     )
+
+#-------------------------------------------------------------------------------
+
+thinning = True
+counter = 0
+
+while thinning:
+    counter = 1 - counter
+    thinning = False
+    whiteIndexes = []
+
+    for i in range(
+                    mapaBinarizacion.bmp.start + mapaBinarizacion.bmp.bpp,
+                    mapaBinarizacion.bmp.start + mapaBinarizacion.bmp.width * mapaBinarizacion.bmp.height * mapaBinarizacion.bmp.bpp - mapaBinarizacion.bmp.bpp,
+                    mapaBinarizacion.bmp.bpp
+    ):
+        if mapaBinarizacion.bmp.data[i] == 0:
+            pixelX = (i - mapaBinarizacion.bmp.start) // mapaBinarizacion.bmp.bpp % mapaBinarizacion.bmp.width
+            pixelY = (i - mapaBinarizacion.bmp.start) // mapaBinarizacion.bmp.bpp // mapaBinarizacion.bmp.width
+
+            pixels = [0,
+                      mapaBinarizacion.bmp.data[mapaBinarizacion.bmp.findPixelIndex(pixelX, pixelY + 1)],
+                      mapaBinarizacion.bmp.data[mapaBinarizacion.bmp.findPixelIndex(pixelX + 1, pixelY + 1)],
+                      mapaBinarizacion.bmp.data[mapaBinarizacion.bmp.findPixelIndex(pixelX + 1, pixelY)],
+                      mapaBinarizacion.bmp.data[mapaBinarizacion.bmp.findPixelIndex(pixelX + 1, pixelY - 1)],
+                      mapaBinarizacion.bmp.data[mapaBinarizacion.bmp.findPixelIndex(pixelX, pixelY - 1)],
+                      mapaBinarizacion.bmp.data[mapaBinarizacion.bmp.findPixelIndex(pixelX - 1, pixelY - 1)],
+                      mapaBinarizacion.bmp.data[mapaBinarizacion.bmp.findPixelIndex(pixelX - 1, pixelY)],
+                      mapaBinarizacion.bmp.data[mapaBinarizacion.bmp.findPixelIndex(pixelX - 1, pixelY + 1)]]
+            pixels = [k/255 for k in pixels]
+            ti = [1, 2, 3, 4, 5, 6, 7, 8, 1]
+            transitions = sum([1 for k in range(len(ti)-1) if pixels[ti[k]] - pixels[ti[k+1]] == 1])
+            blackPixels = 8 - sum(pixels)
+
+            if (
+                2 <= blackPixels <= 6 and transitions == 1 and (
+                    counter == 1 and pixels[1] + pixels[3] + pixels[5] > 0 and pixels[3] + pixels[5] + pixels[7] > 0 or
+                    counter == 0 and pixels[1] + pixels[3] + pixels[7] > 0 and pixels[1] + pixels[5] + pixels[7] > 0
+                )
+            ):
+                whiteIndexes.append(i)
+                thinning = True
+
+    for k in whiteIndexes:
+        mapaBinarizacion.bmp.data[k:k+3] = (255, 255, 255)
 
 #-------------------------------------------------------------------------------
 
 mapaBinarizacion.bmp.makeFile(path + image + ".procesada.bmp")
 print(path + image + ".procesada.bmp")
+print("")
